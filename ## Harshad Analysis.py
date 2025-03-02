@@ -1,12 +1,14 @@
 ## Harshad Analysis
 import PySimpleGUI as sg
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import numpy as np
 
-
+matplotlib.use("TkAgg")  # Ensures compatibility with PySimpleGUI
 class Harshad:
     def __init__(self):
-        self.canvas_agg = None  # Keep track of the plot
+        pass
     def Executable(self):
         self.window = self.create_main_window()
         while True:
@@ -18,7 +20,6 @@ class Harshad:
                 if self.Input_Validation(values["MIN"], values["MAX"]): continue
                 self.Plot(values["MIN"], values["MAX"])
             elif event == (sg.WIN_CLOSED): break
-
         self.window.close()
     def create_main_window(self):
         HarshadEvaluation = sg.Frame('IsHarshad', [
@@ -27,11 +28,13 @@ class Harshad:
                     [sg.Button("", key = "LED", button_color = 'white'), sg.Text("        ", key = "SUPER_HARSHAD_MESSAGE")],
                     [sg.Text("Please enter a range you would like to evaluate:"), sg.Input("", key = "MIN"), sg.Input("", key = "MAX")],
                     [sg.Text("Note: 10 - 99 for two digit. 100 - 999 for three digit.")],
-                    [sg.Button("Plot", key = "PLOT")]
+                    [sg.Text("Please enter a name for your plot if desired"), sg.Input("", key = "TITLE")],
+                    [sg.Button("Plot", key = "PLOT")],
+                    [sg.Text("", key = "NUMBER_OF_HARSHADS")]
         ],
         size = (800, 500))
         PlottingArea = sg.Frame("Plotting Area", [
-                [sg.Canvas(key="PLOT_FRAME")],  # Corrected this line to properly embed the plot
+                [sg.Text("")],
             ],
         size = (800, 500), key = "PLOT_FRAME")
         layout = [[HarshadEvaluation, PlottingArea]]
@@ -55,10 +58,11 @@ class Harshad:
         else:
             self.window["SUPER_HARSHAD_MESSAGE"].update(f"Sorry, {X} is not a Harshad")
             self.window["LED"].update(button_color = 'red')
-    
     def Plot(self, MIN, MAX):
         super_Harshad_Array = []
         Harshad_Array = []
+        super_Harshad_Array_Log = []
+
         for Test in range(int(MIN), int(MAX)):
             X = Test
             TestArray = []
@@ -68,40 +72,30 @@ class Harshad:
             Sum = 0
             for i in TestArray: # get sum of individual digits.
                 Sum = Sum + i
-            if  X % Sum == 0: 
+            if  X % Sum == 0 and X % 10 != 0: # 18 % 9 == 0 (True: remainder == 0) and 18 % 10 != 0 (True: remainder == 8)
                 N = X / Sum # Divisibility Count.
                 runningTotal = 0
                 for j in range(0, int(N)):
                     runningTotal = runningTotal + (10 ** (j*len(TestArray)))*(X)
-                print(runningTotal)
                 super_Harshad_Array.append(runningTotal)
+                super_Harshad_Array_Log.append(np.log10(runningTotal))
                 Harshad_Array.append(X)
-            # Create Matplotlib Figure
-        fig, ax = plt.subplots(figsize=(5, 4))
-        ax.plot(Harshad_Array, super_Harshad_Array, marker='o', linestyle='-')
-        ax.set_xlabel("Harshad Numbers")
-        ax.set_ylabel("Super Harshad Numbers")
-        ax.set_title("Super Harshad Number Plot")
+        fig, ax = plt.subplots() 
+        ax.plot(Harshad_Array, super_Harshad_Array_Log, marker='o')
+        ax.set_title("Harshad vs. Super_Harshad")
+        ax.set_xlabel("Harshad")
+        ax.set_ylabel("Super Harshads")
+        # Ensure the plot is shown **without blocking PySimpleGUI**
+        fig.canvas.manager.show()
+        plt.gcf().canvas.manager.set_window_title({self.window["TITLE"]})
+        self.window["NUMBER_OF_HARSHADS"].update(f"You have exactly {len(Harshad_Array)} Super-Harshads on this interval")
 
-        if self.canvas_agg:
-            self.canvas_agg.get_tk_widget().pack_forget()  # Remove previous plot
-
-        # Draw new figure
-        self.canvas_agg = self.draw_figure(self.window["PLOT_FRAME"], fig)
     def Input_Validation(self, *argv):
         for value in argv:
             if value == '':
                 sg.popup("Input cannot be blank!")
                 return True
-            return False
-    # Function to Draw Matplotlib Figure in PySimpleGUI
-    def draw_figure(self, canvas, figure):
-        canvas_widget = canvas.Widget()  # Get the TK canvas widget from PySimpleGUI
-        figure_canvas_agg = FigureCanvasTkAgg(figure, canvas_widget)
-        figure_canvas_agg.draw()
-        figure_canvas_agg.get_tk_widget().pack(side="top", fill="both", expand=1)
-        return figure_canvas_agg  # Keep a reference to prevent garbage collection
-                
+        return False      
 if __name__ == "__main__":
     Test = Harshad() # class instantiation
     Test.Executable()
