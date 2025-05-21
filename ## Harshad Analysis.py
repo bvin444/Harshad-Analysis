@@ -58,7 +58,7 @@ class Harshad:
         self.Harshad_Array_Log = []
         self.super_Harshad_Array_Log = []
         self.index = 0
-        for Test in range(int(MIN), int(MAX)):
+        for Test in range(int(MIN), int(MAX) + 1):
             X = Test
             TestArray = []
             while Test != 0:
@@ -69,6 +69,7 @@ class Harshad:
                 Sum = Sum + i
             if X % Sum == 0 and Y_N == 'N':
                 self.index = self.index + 1
+                self.Harshad_Array.append(X)
             elif X % Sum == 0 and Y_N == 'Y': 
                     N = X / Sum 
                     runningTotal = 0
@@ -78,6 +79,7 @@ class Harshad:
                     self.super_Harshad_Array_Log.append(math.log10(int(runningTotal))) # np uses fixed-integer precision. math uses arbitrary-integer precision.
                     self.Harshad_Array.append(X)
                     self.Harshad_Array_Log.append(math.log10(int(X)))
+        print(self.Harshad_Array)
     def Create_Array(self) -> None:
         pass
     def Basic_Statistics(self, MIN, MAX):
